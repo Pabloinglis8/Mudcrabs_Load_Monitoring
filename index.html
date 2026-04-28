@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mudcrabs Rugby — Session Load</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:    #1B2A4A;
+    --red:     #C0392B;
+    --gold:    #F0A500;
+    --green:   #1A9E5C;
+    --amber:   #E07B00;
+    --purple:  #7B3FA8;
+    --white:   #FFFFFF;
+    --off:     #F7F8FA;
+    --border:  #E2E6ED;
+    --text:    #1a1a2e;
+    --muted:   #6B7489;
+
+    --field-col: #1A9E5C;
+    --gym-col:   #7B3FA8;
+    --game-col:  #C0392B;
+    --cond-col:  #E07B00;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: #0F1B30;
+    min-height: 100vh;
+    padding: 0 0 48px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(240,165,0,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    padding: 32px 0 20px;
+  }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(240,165,0,0.12);
+    border: 1px solid rgba(240,165,0,0.3);
+    border-radius: 100px;
+    padding: 5px 14px;
+    margin-bottom: 14px;
+  }
+
+  .header-badge span {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .header h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 34px;
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1.05;
+    letter-spacing: 0.01em;
+    margin-bottom: 8px;
+  }
+
+  .header p {
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+  }
+
+  /* ── Progress bar ── */
+  .progress-wrap {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 16px;
+  }
+
+  .progress-seg {
+    flex: 1;
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    transition: background 0.3s;
+  }
+
+  .progress-seg.done { background: var(--gold); }
+
+  /* ── Card ── */
+  .card {
+    background: var(--white);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+
+  .card-label {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 16px 20px 6px;
+  }
+
+  /* ── Player / Date row ── */
+  .date-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--off);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .date-strip .dl { font-size: 12px; color: var(--muted); }
+  .date-strip .dv { font-size: 13px; font-weight: 600; color: var(--text); }
+
+  .player-wrap { padding: 0 20px 16px; }
+
+  .player-wrap select {
+    width: 100%;
+    font-family: 'Barlow', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--off);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 16px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7489' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .player-wrap select:focus { outline: none; border-color: var(--navy); }
+
+  /* ── Session type ── */
+  .session-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 20px 20px;
+  }
+
+  .session-btn {
+    position: relative;
+    padding: 16px 12px 14px;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    background: var(--off);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    overflow: hidden;
+  }
+
+  .session-btn:active { transform: scale(0.96); }
+
+  .session-btn .s-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .session-btn .s-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .session-btn .s-desc {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .session-btn .s-check {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: transparent;
+    transition: all 0.15s;
+  }
+
+  /* Selected states */
+  .session-btn[data-type="Field"].sel    { border-color: var(--field-col); background: #EAF9F1; }
+  .session-btn[data-type="Field"].sel    .s-check { background: var(--field-col); border-color: var(--field-col); }
+  .session-btn[data-type="Gym"].sel      { border-color: var(--gym-col);   background: #F3EDF9; }
+  .session-btn[data-type="Gym"].sel      .s-check { background: var(--gym-col);   border-color: var(--gym-col); }
+  .session-btn[data-type="Game"].sel     { border-color: var(--game-col);  background: #FEF0EF; }
+  .session-btn[data-type="Game"].sel     .s-check { background: var(--game-col);  border-color: var(--game-col); }
+  .session-btn[data-type="Conditioning"].sel { border-color: var(--cond-col); background: #FFF5E6; }
+  .session-btn[data-type="Conditioning"].sel .s-check { background: var(--cond-col); border-color: var(--cond-col); }
+
+  /* ── RPE ── */
+  .rpe-wrap { padding: 0 20px 20px; }
+
+  .rpe-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+
+  .rpe-btn {
+    flex: 1;
+    height: 48px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--off);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rpe-btn:active { transform: scale(0.92); }
+
+  /* RPE colour gradient — green → amber → red */
+  .rpe-btn[data-rpe="1"].sel,
+  .rpe-btn[data-rpe="2"].sel  { background: #1A9E5C; border-color: #1A9E5C; color: #fff; }
+  .rpe-btn[data-rpe="3"].sel,
+  .rpe-btn[data-rpe="4"].sel  { background: #5DAE42; border-color: #5DAE42; color: #fff; }
+  .rpe-btn[data-rpe="5"].sel,
+  .rpe-btn[data-rpe="6"].sel  { background: #E07B00; border-color: #E07B00; color: #fff; }
+  .rpe-btn[data-rpe="7"].sel,
+  .rpe-btn[data-rpe="8"].sel  { background: #D44000; border-color: #D44000; color: #fff; }
+  .rpe-btn[data-rpe="9"].sel,
+  .rpe-btn[data-rpe="10"].sel { background: #C0392B; border-color: #C0392B; color: #fff; }
+
+  .rpe-desc-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+
+  .rpe-desc {
+    font-size: 9px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .rpe-selected-label {
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 18px;
+    transition: all 0.2s;
+  }
+
+  .rpe-selected-label.active {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ── Duration ── */
+  .duration-wrap { padding: 0 20px 20px; }
+
+  .duration-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .dur-preset {
+    padding: 8px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    background: var(--off);
+    font-family: 'Barlow', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+
+  .dur-preset:active { transform: scale(0.94); }
+  .dur-preset.sel {
+    background: var(--navy);
+    border-color: var(--navy);
+    color: var(--white);
+  }
+
+  .duration-custom {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--off);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 16px;
+    transition: border-color 0.15s;
+  }
+
+  .duration-custom:focus-within { border-color: var(--navy); }
+
+  .duration-custom label {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .duration-custom input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    width: 60px;
+    text-align: right;
+  }
+
+  .duration-custom input:focus { outline: none; }
+  .duration-custom input::placeholder { color: var(--border); }
+
+  .duration-custom span {
+    font-size: 14px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* ── Load panel ── */
+  .load-panel {
+    display: none;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .load-panel.visible { display: block; }
+
+  .load-panel-bg {
+    position: absolute;
+    inset: 0;
+    background: var(--navy);
+  }
+
+  /* Accent stripe by session type */
+  .load-panel[data-session="Field"]        .load-accent { background: var(--field-col); }
+  .load-panel[data-session="Gym"]          .load-accent { background: var(--gym-col); }
+  .load-panel[data-session="Game"]         .load-accent { background: var(--game-col); }
+  .load-panel[data-session="Conditioning"] .load-accent { background: var(--cond-col); }
+
+  .load-accent {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    transition: background 0.3s;
+  }
+
+  .load-content { position: relative; z-index: 1; }
+
+  .load-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .load-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 4px;
+    font-family: 'Barlow Condensed', sans-serif;
+  }
+
+  .load-number {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 54px;
+    font-weight: 800;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  .load-zone-badge {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 100px;
+    margin-top: 4px;
+  }
+
+  .zone-low    { background: rgba(26,158,92,0.2);  color: #4CDEA0; }
+  .zone-mod    { background: rgba(224,123,0,0.2);  color: #FFB347; }
+  .zone-high   { background: rgba(192,57,43,0.2);  color: #FF7A6E; }
+  .zone-peak   { background: rgba(192,57,43,0.35); color: #FF5A50; }
+
+  .load-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .lb-item {
+    background: rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+
+  .lb-val {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .lb-label {
+    font-size: 10px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 2px;
+  }
+
+  /* ── Submit ── */
+  .submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    border-radius: 14px;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 10px;
+  }
+
+  .submit-btn:hover   { background: #FFB800; transform: translateY(-1px); }
+  .submit-btn:active  { transform: scale(0.98); }
+  .submit-btn:disabled {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.25);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .submit-note {
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,0.25);
+    padding-bottom: 8px;
+  }
+
+  /* ── Error ── */
+  .error-banner {
+    display: none;
+    background: #FEF0EF;
+    border: 1px solid #F5C1BD;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #8B2018;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(27,42,74,0.3);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Success ── */
+  #success-screen {
+    display: none;
+    text-align: center;
+    padding: 48px 20px;
+  }
+
+  .success-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    animation: pop 0.4s cubic-bezier(.4,0,.2,1);
+  }
+
+  @keyframes pop {
+    0%   { transform: scale(0); opacity: 0; }
+    70%  { transform: scale(1.12); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .success-icon svg { width: 32px; height: 32px; }
+
+  #success-screen h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+
+  #success-screen p {
+    font-size: 14px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.5;
+  }
+
+  #success-detail {
+    margin-top: 20px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 16px 20px;
+    text-align: left;
+  }
+
+  .sd-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.5);
+  }
+
+  .sd-row:last-child { border-bottom: none; }
+  .sd-row strong { color: var(--white); font-weight: 600; }
+
+  .sd-load-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .sd-load-label { font-size: 12px; color: rgba(255,255,255,0.4); }
+  .sd-load-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--gold);
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <div class="header">
+    <div class="header-badge"><span>Mudcrabs Rugby</span></div>
+    <h1>Session Load<br>Check-In</h1>
+    <p>Log your session after training or a game</p>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <div class="progress-seg" id="seg-0"></div>
+    <div class="progress-seg" id="seg-1"></div>
+    <div class="progress-seg" id="seg-2"></div>
+    <div class="progress-seg" id="seg-3"></div>
+  </div>
+
+  <div id="form-section">
+
+    <!-- Player + date -->
+    <div class="card">
+      <div class="date-strip">
+        <span class="dl">Session date</span>
+        <span class="dv" id="date-display"></span>
+      </div>
+      <div class="card-label">Your name</div>
+      <div class="player-wrap">
+        <select id="player-sel">
+          <option value="">Select your name...</option>
+          <!-- ↓↓ REPLACE WITH YOUR ACTUAL PLAYER NAMES ↓↓ -->
+          <option>Player 1</option>
+          <option>Player 2</option>
+          <option>Player 3</option>
+          <option>Player 4</option>
+          <option>Player 5</option>
+          <option>Player 6</option>
+          <option>Player 7</option>
+          <option>Player 8</option>
+          <option>Player 9</option>
+          <option>Player 10</option>
+          <option>Player 11</option>
+          <option>Player 12</option>
+          <option>Player 13</option>
+          <option>Player 14</option>
+          <option>Player 15</option>
+          <option>Player 16</option>
+          <option>Player 17</option>
+          <!-- ↑↑ END PLAYER LIST ↑↑ -->
+        </select>
+      </div>
+    </div>
+
+    <!-- Session type -->
+    <div class="card">
+      <div class="card-label">Session type</div>
+      <div class="session-grid">
+
+        <button class="session-btn" data-type="Field">
+          <span class="s-icon">🏉</span>
+          <span class="s-name">Field</span>
+          <span class="s-desc">Skills, drills, team runs</span>
+          <div class="s-check"></div>
+        </button>
+
+        <button class="session-btn" data-type="Gym">
+          <span class="s-icon">🏋️</span>
+          <span class="s-name">Gym</span>
+          <span class="s-desc">Weights & strength work</span>
+          <div class="s-check"></div>
+        </button>
+
+        <button class="session-btn" data-type="Game">
+          <span class="s-icon">🏆</span>
+          <span class="s-name">Game</span>
+          <span class="s-desc">Match / competition</span>
+          <div class="s-check"></div>
+        </button>
+
+        <button class="session-btn" data-type="Conditioning">
+          <span class="s-icon">⚡</span>
+          <span class="s-name">Conditioning</span>
+          <span class="s-desc">Fitness & cardio work</span>
+          <div class="s-check"></div>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- RPE -->
+    <div class="card">
+      <div class="card-label">Effort level — RPE (1–10)</div>
+      <div class="rpe-wrap">
+        <div class="rpe-row" id="rpe-row-1">
+          <button class="rpe-btn" data-rpe="1">1</button>
+          <button class="rpe-btn" data-rpe="2">2</button>
+          <button class="rpe-btn" data-rpe="3">3</button>
+          <button class="rpe-btn" data-rpe="4">4</button>
+          <button class="rpe-btn" data-rpe="5">5</button>
+        </div>
+        <div class="rpe-row" id="rpe-row-2">
+          <button class="rpe-btn" data-rpe="6">6</button>
+          <button class="rpe-btn" data-rpe="7">7</button>
+          <button class="rpe-btn" data-rpe="8">8</button>
+          <button class="rpe-btn" data-rpe="9">9</button>
+          <button class="rpe-btn" data-rpe="10">10</button>
+        </div>
+        <div class="rpe-desc-row">
+          <div class="rpe-desc">Very easy</div>
+          <div class="rpe-desc">Easy</div>
+          <div class="rpe-desc">Moderate</div>
+          <div class="rpe-desc">Hard</div>
+          <div class="rpe-desc">Very hard</div>
+        </div>
+        <div class="rpe-desc-row">
+          <div class="rpe-desc">Hard+</div>
+          <div class="rpe-desc">Very hard</div>
+          <div class="rpe-desc">Very very hard</div>
+          <div class="rpe-desc">Near max</div>
+          <div class="rpe-desc">Maximum</div>
+        </div>
+        <div class="rpe-selected-label" id="rpe-label">Tap a number to rate your effort</div>
+      </div>
+    </div>
+
+    <!-- Duration -->
+    <div class="card">
+      <div class="card-label">Session duration</div>
+      <div class="duration-wrap">
+        <div class="duration-presets">
+          <button class="dur-preset" data-min="30">30 min</button>
+          <button class="dur-preset" data-min="45">45 min</button>
+          <button class="dur-preset" data-min="60">60 min</button>
+          <button class="dur-preset" data-min="75">75 min</button>
+          <button class="dur-preset" data-min="90">90 min</button>
+          <button class="dur-preset" data-min="105">105 min</button>
+          <button class="dur-preset" data-min="120">120 min</button>
+        </div>
+        <div class="duration-custom">
+          <label>Or type it:</label>
+          <input type="number" id="duration-input" placeholder="—" min="1" max="300">
+          <span>minutes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live load panel -->
+    <div class="load-panel" id="load-panel">
+      <div class="load-panel-bg"></div>
+      <div class="load-accent"></div>
+      <div class="load-content">
+        <div class="load-top">
+          <div>
+            <div class="load-label">Session load</div>
+            <div class="load-number" id="load-number">0</div>
+          </div>
+          <div class="load-zone-badge" id="load-zone">—</div>
+        </div>
+        <div class="load-breakdown">
+          <div class="lb-item">
+            <div class="lb-val" id="lb-session">—</div>
+            <div class="lb-label">Session type</div>
+          </div>
+          <div class="lb-item">
+            <div class="lb-val" id="lb-rpe">—</div>
+            <div class="lb-label">RPE</div>
+          </div>
+          <div class="lb-item">
+            <div class="lb-val" id="lb-dur">—</div>
+            <div class="lb-label">Minutes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-banner" id="error-banner">
+      Something went wrong — please try again or screenshot this and send to your coach.
+    </div>
+
+    <!-- Submit -->
+    <button class="submit-btn" id="submit-btn" disabled>
+      <span id="btn-text">Log Session</span>
+      <div class="spinner" id="spinner"></div>
+    </button>
+    <div class="submit-note">Your load data goes directly to your coaching staff</div>
+
+  </div><!-- /form-section -->
+
+  <!-- Success -->
+  <div id="success-screen">
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1B2A4A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+    </div>
+    <h2>Session logged!</h2>
+    <p>Your load data has been sent to the coaching staff.</p>
+    <div id="success-detail"></div>
+  </div>
+
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────
+// CONFIGURATION
+// ─────────────────────────────────────────────────────────────────────────
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby7vf2C2hwDjFTVB_vyjXNQ9PH-SHZU5S7ZV92ysswhJW7ZwgUTHqFkXXruSRKKbd1E/exec";
+// ─────────────────────────────────────────────────────────────────────────
+
+const RPE_LABELS = {
+  1:"Very easy", 2:"Easy", 3:"Moderate", 4:"Somewhat hard",
+  5:"Hard", 6:"Hard+", 7:"Very hard", 8:"Very very hard",
+  9:"Near maximum", 10:"Maximum effort"
+};
+
+// Load zones (RPE × duration)
+function loadZone(load) {
+  if (load < 150)  return { label:"Low",      cls:"zone-low"  };
+  if (load < 350)  return { label:"Moderate",  cls:"zone-mod"  };
+  if (load < 550)  return { label:"High",      cls:"zone-high" };
+  return              { label:"Peak",      cls:"zone-peak" };
+}
+
+let sessionType = null;
+let rpeVal      = null;
+let durationVal = null;
+
+// Date
+const now = new Date();
+document.getElementById('date-display').textContent =
+  now.toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'long', year:'numeric' });
+
+// Player
+document.getElementById('player-sel').addEventListener('change', () => {
+  updateProgress(); updateSubmit();
+});
+
+// Session type buttons
+document.querySelectorAll('.session-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.session-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    sessionType = btn.dataset.type;
+    // Update load panel accent
+    const panel = document.getElementById('load-panel');
+    panel.dataset.session = sessionType;
+    document.getElementById('lb-session').textContent = sessionType;
+    updateProgress(); updateLoad(); updateSubmit();
+  });
+});
+
+// RPE buttons
+document.querySelectorAll('.rpe-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.rpe-btn').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    rpeVal = parseInt(btn.dataset.rpe);
+    const label = document.getElementById('rpe-label');
+    label.textContent = `RPE ${rpeVal} — ${RPE_LABELS[rpeVal]}`;
+    label.classList.add('active');
+    document.getElementById('lb-rpe').textContent = rpeVal;
+    updateProgress(); updateLoad(); updateSubmit();
+  });
+});
+
+// Duration presets
+document.querySelectorAll('.dur-preset').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dur-preset').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    durationVal = parseInt(btn.dataset.min);
+    document.getElementById('duration-input').value = durationVal;
+    document.getElementById('lb-dur').textContent = durationVal;
+    updateProgress(); updateLoad(); updateSubmit();
+  });
+});
+
+// Duration custom input
+document.getElementById('duration-input').addEventListener('input', function() {
+  const v = parseInt(this.value);
+  if (v > 0 && v <= 300) {
+    durationVal = v;
+    document.getElementById('lb-dur').textContent = v;
+    // Deselect presets
+    document.querySelectorAll('.dur-preset').forEach(b => {
+      b.classList.toggle('sel', parseInt(b.dataset.min) === v);
+    });
+    updateProgress(); updateLoad(); updateSubmit();
+  }
+});
+
+function updateLoad() {
+  if (!rpeVal || !durationVal) return;
+  const load = rpeVal * durationVal;
+  const zone = loadZone(load);
+  document.getElementById('load-panel').classList.add('visible');
+  document.getElementById('load-number').textContent = load.toLocaleString();
+  const zoneEl = document.getElementById('load-zone');
+  zoneEl.textContent = zone.label;
+  zoneEl.className = 'load-zone-badge ' + zone.cls;
+}
+
+function updateProgress() {
+  const steps = [
+    document.getElementById('player-sel').value !== '',
+    sessionType !== null,
+    rpeVal !== null,
+    durationVal !== null,
+  ];
+  steps.forEach((done, i) => {
+    document.getElementById('seg-' + i).classList.toggle('done', done);
+  });
+}
+
+function updateSubmit() {
+  const ready = document.getElementById('player-sel').value !== ''
+    && sessionType !== null
+    && rpeVal !== null
+    && durationVal !== null;
+  document.getElementById('submit-btn').disabled = !ready;
+}
+
+// Submit
+document.getElementById('submit-btn').addEventListener('click', async () => {
+  const player   = document.getElementById('player-sel').value;
+  const load     = rpeVal * durationVal;
+  const dateVal  = now.toISOString().split('T')[0];
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7)); // Monday
+  const weekStartStr = weekStart.toISOString().split('T')[0];
+
+  const payload = {
+    timestamp:   new Date().toISOString(),
+    date:        dateVal,
+    weekStart:   weekStartStr,
+    player:      player,
+    sessionType: sessionType,
+    rpe:         rpeVal,
+    duration:    durationVal,
+    load:        load,
+    loadZone:    loadZone(load).label,
+  };
+
+  document.getElementById('btn-text').style.display  = 'none';
+  document.getElementById('spinner').style.display   = 'block';
+  document.getElementById('submit-btn').disabled     = true;
+  document.getElementById('error-banner').style.display = 'none';
+
+  // No URL set — simulate for preview
+  if (SCRIPT_URL === "YOUR_GOOGLE_APPS_SCRIPT_URL_HERE") {
+    await new Promise(r => setTimeout(r, 800));
+    showSuccess(payload);
+    return;
+  }
+
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    showSuccess(payload);
+  } catch(err) {
+    document.getElementById('btn-text').style.display  = 'block';
+    document.getElementById('spinner').style.display   = 'none';
+    document.getElementById('submit-btn').disabled     = false;
+    document.getElementById('error-banner').style.display = 'block';
+  }
+});
+
+function showSuccess(p) {
+  document.getElementById('form-section').style.display = 'none';
+  document.getElementById('success-screen').style.display = 'block';
+  const zone = loadZone(p.load);
+  document.getElementById('success-detail').innerHTML = `
+    <div class="sd-load-row">
+      <div class="sd-load-label">Session load</div>
+      <div class="sd-load-num">${p.load.toLocaleString()}</div>
+    </div>
+    <div class="sd-row"><span>Player</span><strong>${p.player}</strong></div>
+    <div class="sd-row"><span>Session</span><strong>${p.sessionType}</strong></div>
+    <div class="sd-row"><span>RPE</span><strong>${p.rpe} / 10 — ${RPE_LABELS[p.rpe]}</strong></div>
+    <div class="sd-row"><span>Duration</span><strong>${p.duration} minutes</strong></div>
+    <div class="sd-row"><span>Load zone</span><strong>${zone.label}</strong></div>
+    <div class="sd-row"><span>Week starting</span><strong>${p.weekStart}</strong></div>
+  `;
+}
+</script>
+</body>
+</html>
